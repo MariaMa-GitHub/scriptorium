@@ -7,6 +7,10 @@ Scriptorium is an innovative online platform where you can write, execute, and s
 Start by running the development server:
 
 ```bash
+npm install
+```
+
+```bash
 npm run dev
 # or
 yarn dev
