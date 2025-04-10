@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url = "file:./dev.db"
+}
+
+// user model
+model User {
+
+  // fields
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  password      String
+  firstName     String
+  lastName      String
+  phoneNumber   String?
+  avatar        String?        
+  role          String         @default("USER")     
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // relationships
+  templates     Template[]     // templates created by user
+  posts         Post[]         // posts created by user
+  comments      Comment[]      // comments made by user
+  reports       Report[]       // reports made by user
+  votes         Vote[]         // votes made by user
+
+}
+
+// template model
+model Template {
+
+  // fields
+  id          Int         @id @default(autoincrement())
+  title       String
+  code        String      
+  language    String    
+  explanation String?    
+  isFork      Boolean     @default(false)
+  originalId  Int?       
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // relationships
+  author      User        @relation(fields: [authorId], references: [id])     // author of the template
+  authorId    Int                                                             // id of the author of the template
+  tags        Tag[]                                                           // tags of the template
+  posts       Post[]                                                          // posts referencing the template
+
+}
+
+// post model
+model Post {
+
+  // fields
+  id          Int         @id @default(autoincrement())
+  title       String
+  description String?
+  content     String
+  isHidden    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // relationships
+  author      User        @relation(fields: [authorId], references: [id])     // author of the post 
+  authorId    Int                                                             // id of the author of the post
+  tags        Tag[]                                                           // tags of the post
+  comments    Comment[]                                                       // comments on the post
+  templates   Template[]                                                      // templates referenced in the post
+  reports     Report[]                                                        // reports on the post
+  votes       Vote[]                                                          // votes on the post
+
+}
+
+// comment model
+model Comment {
+
+  // fields
+  id          Int       @id @default(autoincrement())
+  content     String
+  isHidden    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // relationships
+  author      User      @relation(fields: [authorId], references: [id])       // author of the comment
+  authorId    Int                                                             // id of the author of the comment
+  post        Post      @relation(fields: [postId], references: [id])         // post that the comment is on
+  postId      Int                                                             // id of the post that the comment is on
+  parentId    Int?                                                            // id of the parent comment if it is a reply
+  reports     Report[]                                                        // reports on the comment
+  votes       Vote[]                                                          // votes on the comment
+
+}
+
+// tag model
+model Tag {
+
+  // fields
+  id            Int             @id @default(autoincrement())
+  name          String          @unique
+
+  // relationships
+  templates     Template[]      // templates with the tag
+  posts         Post[]          // posts with the tag
+
+}
+
+// report model
+model Report {
+
+  // fields
+  id          Int           @id @default(autoincrement())
+  reason      String
+  createdAt   DateTime      @default(now())
+
+  // relationships
+  reporter    User          @relation(fields: [reporterId], references: [id])
+  reporterId  Int
+  
+  // relationships (different reportable types)
+  post        Post?         @relation(fields: [postId], references: [id])
+  postId      Int?
+  comment     Comment?      @relation(fields: [commentId], references: [id])
+  commentId   Int?
+
+}
+
+// vote model
+model Vote {
+
+  // fields
+  id          Int       @id @default(autoincrement())
+  isUpvote    Boolean   
+  createdAt   DateTime  @default(now())
+
+  // relationships
+  voter       User      @relation(fields: [voterId], references: [id])
+  voterId     Int
+  
+  // relationships (different voteable types)
+  post        Post?     @relation(fields: [postId], references: [id])
+  postId      Int?
+  comment     Comment?  @relation(fields: [commentId], references: [id])
+  commentId   Int?
+
+  // ensure one vote per user per item
+  @@unique([voterId, postId, commentId]) 
+
+}
