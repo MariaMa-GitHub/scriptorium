@@ -11,6 +11,10 @@ npm install
 ```
 
 ```bash
+npm run build:docker 
+```
+
+```bash
 npm run dev
 # or
 yarn dev
